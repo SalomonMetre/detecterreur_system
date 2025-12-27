@@ -307,31 +307,41 @@
                 body: JSON.stringify({text}) 
             };
 
-            // A. Analysis (Fastest)
+            // A. Analysis (Radar Chart)
             fetch(`${API_URL}/analyze`, payload)
                 .then(r => r.json())
                 .then(data => {
                     toggleLoader('chart', false);
                     renderChart(data.scores);
                     renderTags(data.raw_counts);
+                })
+                .catch(err => {
+                    console.error("Erreur d'analyse:", err);
+                    toggleLoader('chart', false);
                 });
 
-            // B. Correction (JSON Response)
+            // B. Correction (Statique JSON)
             fetch(`${API_URL}/correct`, payload)
                 .then(r => r.json())
                 .then(data => {
                     toggleLoader('correction', false);
-                    if (data.correction) {
+                    if (data && data.correction) {
                         typeWriter('correctionOutput', data.correction);
                     } else {
-                        document.getElementById('correctionOutput').innerText = "Aucune correction nécessaire.";
+                        document.getElementById('correctionOutput').innerText = "Aucune correction disponible.";
                         document.getElementById('correctionOutput').style.display = 'block';
                     }
+                })
+                .catch(err => {
+                    console.error("Erreur de correction:", err);
+                    toggleLoader('correction', false);
                 });
 
-            // C. Advice (Streaming Mode)
+            // C. Advice (Streaming Mode - Réel réactif)
             try {
                 const response = await fetch(`${API_URL}/advise`, payload);
+                if (!response.ok) throw new Error("Erreur réseau");
+
                 toggleLoader('advice', false);
                 const adviceOutput = document.getElementById('adviceOutput');
                 adviceOutput.innerText = ""; 
@@ -343,9 +353,13 @@
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
-                    adviceOutput.innerText += decoder.decode(value, { stream: true });
+                    
+                    // On force le décodage en mode stream pour la fluidité
+                    const chunk = decoder.decode(value, { stream: true });
+                    adviceOutput.innerText += chunk;
                 }
             } catch (err) {
+                console.error("Erreur de streaming conseil:", err);
                 toggleLoader('advice', false);
                 document.getElementById('adviceOutput').innerText = "Le service de conseil est indisponible.";
                 document.getElementById('adviceOutput').style.display = 'block';
@@ -423,12 +437,19 @@
             el.innerHTML = text; 
             el.style.display = 'block';
             el.style.opacity = 0;
-            setTimeout(() => { el.style.transition = "opacity 0.5s"; el.style.opacity = 1; }, 50);
+            // Animation de fondu fluide au lieu d'un simple affichage
+            setTimeout(() => { 
+                el.style.transition = "opacity 0.8s ease-in-out"; 
+                el.style.opacity = 1; 
+            }, 50);
         }
 
         function copyCorrection() {
             const text = document.getElementById('correctionOutput').innerText;
-            navigator.clipboard.writeText(text);
+            if (text) {
+                navigator.clipboard.writeText(text);
+                alert("Correction copiée !");
+            }
         }
     </script>
 </body>
