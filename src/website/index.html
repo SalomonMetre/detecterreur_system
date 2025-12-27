@@ -281,88 +281,74 @@
             formData.append('file', file);
             
             try {
-                // Change UI to loading state immediately implies responsiveness
                 document.getElementById('inputText').setAttribute('placeholder', 'Chargement du fichier...');
-                
                 const res = await fetch(`${API_URL}/upload`, { method: 'POST', body: formData });
                 const data = await res.json();
-                
-                // Set text and TRIGGER analysis immediately
                 document.getElementById('inputText').value = data.text;
                 launchAnalysis(); 
-
             } catch (err) { alert("Erreur lors du chargement du fichier."); }
         });
 
- // --- MAIN LOGIC ---
+        // --- MAIN LOGIC ---
         async function launchAnalysis() {
             const text = document.getElementById('inputText').value;
             if (!text.trim()) return;
 
             // 1. Prepare UI
             document.getElementById('resultsGrid').classList.add('visible');
-            
             toggleLoader('chart', true);
             toggleLoader('correction', true);
             toggleLoader('advice', true);
-
             document.getElementById('tagsOutput').innerHTML = '';
             
-            // 2. Payloads & Config
             const payload = { 
                 method: 'POST', 
                 headers: {'Content-Type': 'application/json'}, 
                 body: JSON.stringify({text}) 
             };
 
-            // A. Analysis (Fastest - Statique)
+            // A. Analysis (Fastest)
             fetch(`${API_URL}/analyze`, payload)
                 .then(r => r.json())
                 .then(data => {
                     toggleLoader('chart', false);
                     renderChart(data.scores);
                     renderTags(data.raw_counts);
-                })
-                .catch(err => console.error("Erreur Analyse:", err));
+                });
 
-            // B. Correction (Medium - Statique)
+            // B. Correction (JSON Response)
             fetch(`${API_URL}/correct`, payload)
                 .then(r => r.json())
                 .then(data => {
                     toggleLoader('correction', false);
-                    typeWriter('correctionOutput', data.correction);
-                })
-                .catch(err => console.error("Erreur Correction:", err));
+                    if (data.correction) {
+                        typeWriter('correctionOutput', data.correction);
+                    } else {
+                        document.getElementById('correctionOutput').innerText = "Aucune correction nécessaire.";
+                        document.getElementById('correctionOutput').style.display = 'block';
+                    }
+                });
 
-            // C. Advice (Streaming Mode - Fastest Perception)
+            // C. Advice (Streaming Mode)
             try {
                 const response = await fetch(`${API_URL}/advise`, payload);
-                
-                // On cache le loader et on prépare le conteneur
                 toggleLoader('advice', false);
                 const adviceOutput = document.getElementById('adviceOutput');
-                adviceOutput.innerText = ""; // On vide le contenu précédent
+                adviceOutput.innerText = ""; 
                 adviceOutput.style.display = 'block';
 
-                // Initialisation du Stream
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
 
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
-
-                    // Décodage du chunk et ajout immédiat au texte
-                    const chunk = decoder.decode(value, { stream: true });
-                    adviceOutput.innerText += chunk;
-                    
-                    // Auto-scroll optionnel si le texte devient long
-                    // adviceOutput.scrollTop = adviceOutput.scrollHeight;
+                    adviceOutput.innerText += decoder.decode(value, { stream: true });
                 }
             } catch (err) {
-                console.error("Erreur Advice Stream:", err);
                 toggleLoader('advice', false);
-                document.getElementById('adviceOutput').innerText = "Erreur lors de la génération du conseil.";
+                document.getElementById('adviceOutput').innerText = "Le service de conseil est indisponible.";
+                document.getElementById('adviceOutput').style.display = 'block';
             }
         }
 
@@ -372,11 +358,11 @@
             const content = document.getElementById(id === 'chart' ? 'chartContainer' : id + 'Output');
             
             if (show) {
-                loader.style.display = 'block';
-                content.style.display = 'none';
+                if (loader) loader.style.display = 'block';
+                if (content) content.style.display = 'none';
             } else {
-                loader.style.display = 'none';
-                content.style.display = 'block';
+                if (loader) loader.style.display = 'none';
+                if (content) content.style.display = 'block';
             }
         }
 
@@ -397,7 +383,6 @@
         let myChart = null;
         function renderChart(scores) {
             const ctx = document.getElementById('radarChart').getContext('2d');
-            
             const gradient = ctx.createRadialGradient(150, 150, 0, 150, 150, 150);
             gradient.addColorStop(0, 'rgba(108, 92, 231, 0.4)');
             gradient.addColorStop(1, 'rgba(108, 92, 231, 0.1)');
@@ -436,6 +421,7 @@
         function typeWriter(id, text) {
             const el = document.getElementById(id);
             el.innerHTML = text; 
+            el.style.display = 'block';
             el.style.opacity = 0;
             setTimeout(() => { el.style.transition = "opacity 0.5s"; el.style.opacity = 1; }, 50);
         }
