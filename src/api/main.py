@@ -108,28 +108,38 @@ async def analyze_text(request: TextRequest):
 
 @app.post("/correct")
 async def correct_text(request: TextRequest):
-    """Correction recyclée : Orchestrateur (Règles) + LLM (Fluidité)"""
+    """
+    Correction collaborative : L'orchestrateur suggère, le LLM valide et fluidifie.
+    """
     report = orchestrator.get_detailed_report(request.text)
     suggestions = report.get("suggestions", [])
     
-    # Extraction des modifications indépendantes pour le contexte LLM
-    diff_context = "\n".join([f"- Modification : '{request.text}' -> '{sug[3]}'" 
+    # Construction du contexte des suggestions
+    diff_context = "\n".join([f"- Suggestion locale : '{request.text}' -> '{sug[3]}'" 
                              for sug in suggestions if sug[2]])
     
     final_cascade = report.get("corrected")
 
-    prompt = f"""[Instruction]: Tu es un correcteur expert en langue française.
-    L'analyse locale a suggéré ces modifications atomiques :
-    {diff_context}
-
-    [Base de correction]: "{final_cascade}"
-    [Texte original]: "{request.text}"
-
-    TÂCHE: Produis une version finale fluide et correcte. 
-    Respecte strictement les règles de grammaire française.
-    Renvoie UNIQUEMENT le texte final, sans commentaires ni guillemets."""
+    # Nouveau prompt avec liberté de correction
+    prompt = f"""[Instruction]: Tu es un expert en linguistique française et un correcteur de haut niveau.
     
-    final_correction = await call_llm(prompt, temperature=0.1)
+    L'analyse automatique a détecté les points suivants :
+    {diff_context if diff_context else "Aucune modification suggérée."}
+
+    [Proposition de synthèse de l'analyseur]: "{final_cascade}"
+    [Texte original de l'utilisateur]: "{request.text}"
+
+    TÂCHE:
+    1. Analyse la pertinence des suggestions automatiques.
+    2. Si une suggestion de l'analyseur est erronée ou maladroite, IGNORE-LA et utilise ta propre expertise.
+    3. Produis la version la plus naturelle et grammaticalement parfaite possible.
+    
+    CONTRAINTE : Renvoie UNIQUEMENT le texte corrigé final. Pas d'explications, pas de guillemets."""
+    
+    # On peut augmenter légèrement la température (0.2) pour laisser au LLM 
+    # une petite marge de manœuvre stylistique.
+    final_correction = await call_llm(prompt, temperature=0.2)
+    
     return {"correction": final_correction if final_correction else final_cascade}
 
 @app.post("/advise")
