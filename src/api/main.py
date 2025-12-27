@@ -109,63 +109,67 @@ async def analyze_text(request: TextRequest):
 @app.post("/correct")
 async def correct_text(request: TextRequest):
     """
-    Correction collaborative : L'orchestrateur suggère, le LLM valide et fluidifie.
+    Correction collaborative : Le LLM arbitre entre les corrections par couches.
     """
-    report = orchestrator.get_detailed_report(request.text)
-    suggestions = report.get("suggestions", [])
+    # 1. Obtenir les traces indépendantes (original -> corrigé par couche)
+    traces = orchestrator.get_independent_trace(request.text)
     
-    # Construction du contexte des suggestions
-    diff_context = "\n".join([f"- Suggestion locale : '{request.text}' -> '{sug[3]}'" 
-                             for sug in suggestions if sug[2]])
-    
-    final_cascade = report.get("corrected")
+    # 2. Construction d'un contexte de modifications clair pour le LLM
+    if traces:
+        diff_context = "\n".join([f"- Modification suggérée : '{orig}' -> '{corr}'" for orig, corr in traces])
+    else:
+        diff_context = "Aucune erreur détectée par l'analyseur local."
 
-    # Nouveau prompt avec liberté de correction
-    prompt = f"""[Instruction]: Tu es un expert en linguistique française et un correcteur de haut niveau.
-    
-    L'analyse automatique a détecté les points suivants :
-    {diff_context if diff_context else "Aucune modification suggérée."}
+    # 3. Récupération de la cascade complète (la meilleure version de l'automate)
+    final_cascade = orchestrator.correct(request.text)
 
-    [Proposition de synthèse de l'analyseur]: "{final_cascade}"
-    [Texte original de l'utilisateur]: "{request.text}"
+    prompt = f"""[Instruction]: Expert en linguistique française.
+    
+    [ANALYSE LOCALE DES COUCHES]:
+    {diff_context}
+
+    [SYNTHÈSE AUTOMATIQUE]: "{final_cascade}"
+    [TEXTE SOURCE]: "{request.text}"
 
     TÂCHE:
-    1. Analyse la pertinence des suggestions automatiques.
-    2. Si une suggestion de l'analyseur est erronée ou maladroite, IGNORE-LA et utilise ta propre expertise.
-    3. Produis la version la plus naturelle et grammaticalement parfaite possible.
+    Vérifie la validité des modifications suggérées ci-dessus. 
+    Produis une correction finale qui fusionne ces suggestions tout en assurant une fluidité parfaite.
+    Si l'analyseur local a fait une erreur (sur-correction), privilégie le sens du texte source.
+
+    RENVOIE UNIQUEMENT LE TEXTE FINAL."""
     
-    CONTRAINTE : Renvoie UNIQUEMENT le texte corrigé final. Pas d'explications, pas de guillemets."""
+    final_correction = await call_llm(prompt, temperature=0.1)
     
-    # On peut augmenter légèrement la température (0.2) pour laisser au LLM 
-    # une petite marge de manœuvre stylistique.
-    final_correction = await call_llm(prompt, temperature=0.2)
-    
+    # Fallback sur la cascade si le LLM échoue
     return {"correction": final_correction if final_correction else final_cascade}
 
 @app.post("/advise")
 async def advise_text(request: TextRequest):
-    """Conseil pédagogique en streaming (Masquage des codes techniques)"""
+    """Conseil pédagogique basé sur les traces de l'orchestrateur."""
     report = orchestrator.get_detailed_report(request.text)
-    categories_set = {cat for cat, _, is_err in report["errors"] if is_err}
+    traces = orchestrator.get_independent_trace(request.text)
     
-    if not categories_set:
-        async def success(): yield "Excellent travail ! Aucune erreur détectée."
+    if not traces:
+        async def success(): yield "Votre texte est déjà correct. Bravo !"
         return StreamingResponse(success(), media_type="text/plain")
 
-    prompt = f"""
-    ### RÈGLES DE RÉFÉRENCE ###
-    {GRAMMAR_CONTEXT[:5000]}
-    ###########################
-    [TEXTE ÉTUDIANT]: "{request.text}"
-    [DOMAINES D'ERREURS]: {", ".join(categories_set)}
+    # On transforme les traces en explications visuelles pour le prompt
+    explications_locales = "\n".join([f"Erreur détectée: '{orig}' corrigé en '{corr}'" for orig, corr in traces])
 
-    TÂCHE: Agis en professeur de français bienveillant. Explique la règle.
+    prompt = f"""
+    ### CONTEXTE GRAMMATICAL ###
+    {GRAMMAR_CONTEXT[:3000]}
+    ###########################
+
+    [MODIFICATIONS EFFECTUÉES]:
+    {explications_locales}
+
+    TÂCHE: Agis en professeur bienveillant. 
+    1. Explique la règle derrière l'une des corrections majeures.
+    2. Ne cite aucun code technique (ex: OSUB, OORD).
+    3. Donne un exemple concret de la règle appliquée.
     
-    RÈGLES STRICTES :
-    1. NE MENTIONNE JAMAIS de codes techniques (ex: GCON, FMAJ, ORTH).
-    2. Parle uniquement des concepts : {", ".join(categories_set)}.
-    3. Explique la faute simplement et donne obligatoirement UN exemple correct.
-    4. Réponse courte (max 60 mots).
+    Contrainte: Style direct, max 60 mots.
     """
     return StreamingResponse(stream_ollama(prompt), media_type="text/plain")
 
