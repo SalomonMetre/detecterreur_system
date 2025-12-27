@@ -109,67 +109,58 @@ async def analyze_text(request: TextRequest):
 @app.post("/correct")
 async def correct_text(request: TextRequest):
     """
-    Correction collaborative : Le LLM arbitre entre les corrections par couches.
+    Prend la version finale de la cascade et la polit pour une fluidité maximale.
     """
-    # 1. Obtenir les traces indépendantes (original -> corrigé par couche)
-    traces = orchestrator.get_independent_trace(request.text)
-    
-    # 2. Construction d'un contexte de modifications clair pour le LLM
-    if traces:
-        diff_context = "\n".join([f"- Modification suggérée : '{orig}' -> '{corr}'" for orig, corr in traces])
-    else:
-        diff_context = "Aucune erreur détectée par l'analyseur local."
-
-    # 3. Récupération de la cascade complète (la meilleure version de l'automate)
+    # On récupère la version corrigée par toutes les couches de l'orchestrateur
     final_cascade = orchestrator.correct(request.text)
 
-    prompt = f"""[Instruction]: Expert en linguistique française.
+    prompt = f"""[Instruction]: Tu es un correcteur expert. 
+    Ta tâche est de rendre la phrase suivante parfaite, naturelle et sans aucune faute.
     
-    [ANALYSE LOCALE DES COUCHES]:
-    {diff_context}
+    [Phrase à traiter]: "{final_cascade}"
+    [Texte original pour contexte]: "{request.text}"
 
-    [SYNTHÈSE AUTOMATIQUE]: "{final_cascade}"
-    [TEXTE SOURCE]: "{request.text}"
-
-    TÂCHE:
-    Vérifie la validité des modifications suggérées ci-dessus. 
-    Produis une correction finale qui fusionne ces suggestions tout en assurant une fluidité parfaite.
-    Si l'analyseur local a fait une erreur (sur-correction), privilégie le sens du texte source.
-
-    RENVOIE UNIQUEMENT LE TEXTE FINAL."""
+    TÂCHE: Produis la version finale corrigée. 
+    RENVOIE UNIQUEMENT LA PHRASE, SANS EXPLICATION NI GUILLEMETS."""
     
     final_correction = await call_llm(prompt, temperature=0.1)
     
-    # Fallback sur la cascade si le LLM échoue
+    # Sécurité : si le LLM renvoie vide, on garde la cascade
     return {"correction": final_correction if final_correction else final_cascade}
 
 @app.post("/advise")
 async def advise_text(request: TextRequest):
-    """Conseil pédagogique basé sur les traces de l'orchestrateur."""
+    """
+    Donne un conseil basé sur les règles de grammaire et les types d'erreurs.
+    """
     report = orchestrator.get_detailed_report(request.text)
-    traces = orchestrator.get_independent_trace(request.text)
+    # On extrait les catégories uniques (ex: GRAMMAIRE, ORTHOGRAPHE)
+    categories_set = {cat for cat, _, is_err in report["errors"] if is_err}
     
-    if not traces:
-        async def success(): yield "Votre texte est déjà correct. Bravo !"
+    if not categories_set:
+        async def success(): yield "Aucune erreur détectée. Votre français est excellent !"
         return StreamingResponse(success(), media_type="text/plain")
 
-    # On transforme les traces en explications visuelles pour le prompt
-    explications_locales = "\n".join([f"Erreur détectée: '{orig}' corrigé en '{corr}'" for orig, corr in traces])
+    # On prépare la liste des domaines à expliquer
+    domaines = ", ".join(categories_set)
 
     prompt = f"""
-    ### CONTEXTE GRAMMATICAL ###
-    {GRAMMAR_CONTEXT[:3000]}
-    ###########################
+    ### RÉFÉRENTIEL DE RÈGLES ###
+    {GRAMMAR_CONTEXT[:4000]}
+    #############################
 
-    [MODIFICATIONS EFFECTUÉES]:
-    {explications_locales}
+    [DOMAINES À EXPLIQUER]: {domaines}
+    [PHRASE ÉTUDIÉE]: "{request.text}"
 
-    TÂCHE: Agis en professeur bienveillant. 
-    1. Explique la règle derrière l'une des corrections majeures.
-    2. Ne cite aucun code technique (ex: OSUB, OORD).
-    3. Donne un exemple concret de la règle appliquée.
+    TÂCHE: 
+    En tant que professeur de français, explique la ou les règles de grammaire/orthographe 
+    liées aux domaines suivants : {domaines}.
     
-    Contrainte: Style direct, max 60 mots.
+    RÈGLES STRICTES :
+    1. Ne parle jamais du logiciel, des "couches" ou des corrections automatiques.
+    2. Explique le concept théorique simplement.
+    3. Donne un exemple correct pour illustrer la règle.
+    4. Réponse pédagogique, bienveillante et courte (max 60 mots).
     """
     return StreamingResponse(stream_ollama(prompt), media_type="text/plain")
 
