@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DetectErreur | Analyseur L2 Avancé</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #1e1e2f 0%, #2a2a40 100%);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            
+            --accent: #6c5ce7;       /* Violet */
+            --accent-hover: #5649c0;
+            --color-cat: #00b894;    /* Vert */
+            --color-rules: #fdcb6e;  /* Orange */
+            --color-ai: #00cec9;     /* Cyan */
+            
+            --text-main: #ffffff;
+            --text-muted: #a0a0b0;
+            --success: #00b894;
+            --warning: #fdcb6e;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        /* --- BACKGROUND ORBS --- */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.4;
+            animation: float 10s infinite ease-in-out;
+        }
+        .orb-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: #6c5ce7; animation-delay: 0s; }
+        .orb-2 { bottom: -10%; right: -10%; width: 40vw; height: 40vw; background: #00cec9; animation-delay: -5s; }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(30px, 50px); }
+        }
+
+        .container { width: 100%; max-width: 1200px; z-index: 1; }
+
+        /* --- HEADER & TYPOGRAPHY --- */
+        header { text-align: center; margin-bottom: 40px; }
+        
+        h1 { 
+            font-size: 3.5rem; font-weight: 800; margin-bottom: 15px; letter-spacing: -1px; 
+            background: linear-gradient(to right, #fff, #a0a0b0);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        h1 span { color: var(--accent); -webkit-text-fill-color: var(--accent); }
+
+        .subtitle { 
+            color: var(--text-muted); font-size: 1.1rem; max-width: 800px; margin: 0 auto; line-height: 1.8; 
+        }
+
+        /* Text Highlights */
+        .hl-main { color: #a29bfe; font-weight: 600; }
+        .hl-cat { color: var(--color-cat); font-weight: 600; }
+        .hl-rules { color: var(--color-rules); font-weight: 600; }
+        .hl-ai { 
+            color: var(--color-ai); font-weight: 700; 
+            text-shadow: 0 0 15px rgba(0, 206, 201, 0.4); 
+        }
+
+        /* --- GLASS PANEL --- */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: var(--glass-shadow);
+            padding: 30px;
+            margin-bottom: 30px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .glass-panel:hover { transform: translateY(-2px); box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45); }
+
+        /* --- INPUT --- */
+        .input-wrapper { position: relative; width: 100%; }
+        textarea {
+            width: 100%; height: 150px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-main); padding: 20px;
+            font-size: 1.1rem; font-family: 'Inter', sans-serif;
+            resize: vertical; transition: border-color 0.3s;
+        }
+        textarea:focus { outline: none; border-color: var(--accent); }
+
+        /* --- TOOLBAR --- */
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; }
+        
+        .file-upload { position: relative; overflow: hidden; display: inline-block; }
+        .file-upload input[type=file] { 
+            font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; height: 100%; width: 100%;
+        }
+
+        .btn-secondary {
+            color: var(--text-muted); background: transparent; border: 1px solid var(--glass-border);
+            padding: 10px 20px; border-radius: 8px; font-size: 0.9rem; transition: all 0.2s; cursor: pointer;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.05); color: white; border-color: rgba(255,255,255,0.3); }
+
+        .btn-primary {
+            background: var(--accent); color: white; border: none; padding: 12px 32px; border-radius: 10px;
+            font-size: 1rem; font-weight: 600; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4); transition: all 0.3s;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+
+        /* --- RESULTS GRID --- */
+        .results-grid {
+            display: grid; grid-template-columns: 350px 1fr; gap: 30px;
+            opacity: 0; transform: translateY(20px); transition: all 0.6s ease;
+        }
+        .results-grid.visible { opacity: 1; transform: translateY(0); }
+        @media (max-width: 900px) { .results-grid { grid-template-columns: 1fr; } }
+
+        /* --- LOADERS --- */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+            background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px;
+        }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .sk-chart { width: 100%; height: 300px; border-radius: 50%; }
+        .sk-text { height: 1em; width: 100%; margin-bottom: 12px; }
+        .sk-text.short { width: 60%; }
+
+        /* --- CONTENT AREAS --- */
+        .chart-container { position: relative; height: 300px; width: 100%; display: none; }
+        
+        .result-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px;
+        }
+        .result-header h2 { font-size: 1.3rem; font-weight: 600; }
+
+        .correction-content {
+            font-size: 1.1rem; line-height: 1.8; color: #e0e0e0; white-space: pre-wrap;
+            background: rgba(0,0,0,0.2); padding: 20px; border-radius: 10px;
+            border-left: 3px solid var(--success); display: none;
+        }
+
+        .advice-box { margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--glass-border); }
+        .advice-content {
+            font-style: italic; color: #dfe6e9; line-height: 1.6;
+            background: rgba(108, 92, 231, 0.1); padding: 15px; border-radius: 8px;
+            border-left: 3px solid var(--warning); display: none;
+        }
+
+        /* --- TAGS --- */
+        .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+        .tag { font-size: 0.75rem; padding: 4px 10px; border-radius: 20px; font-weight: 700; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.1); }
+        .tag-forme { color: #ff7675; border-color: #ff7675; }
+        .tag-ortho { color: #fdcb6e; border-color: #fdcb6e; }
+        .tag-gram { color: #00cec9; border-color: #00cec9; }
+
+    </style>
+</head>
+<body>
+
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <div class="container">
+        <header>
+            <h1>Detect<span>Erreur</span></h1>
+            <p class="subtitle">
+                <span class="hl-main">Analyseur pédagogique avancé</span> pour apprenants L2.<br>
+                <span class="hl-cat">Détection indépendante par catégorie</span>, 
+                <span class="hl-rules">correction en cascade basées sur des règles</span> 
+                et <span class="hl-ai">suggestions améliorées par I.A.</span>
+            </p>
+        </header>
+
+        <div class="glass-panel">
+            <div class="input-wrapper">
+                <textarea id="inputText" placeholder="Tapez votre texte en français ici..."></textarea>
+            </div>
+            
+            <div class="toolbar">
+                <div class="file-upload">
+                    <button class="btn-secondary">
+                        <i class="fas fa-file-upload"></i> Charger un fichier (.txt)
+                    </button>
+                    <input type="file" id="fileInput" accept=".txt">
+                </div>
+                
+                <button class="btn-primary" onclick="launchAnalysis()" id="analyzeBtn">
+                    <i class="fas fa-wand-magic-sparkles"></i> Analyser
+                </button>
+            </div>
+        </div>
+
+        <div class="results-grid" id="resultsGrid">
+            
+            <div class="glass-panel">
+                <div class="result-header">
+                    <h2><i class="fas fa-chart-radar"></i> Diagnostic des fautes</h2>
+                </div>
+                
+                <div id="loader-chart" class="skeleton sk-chart"></div>
+
+                <div class="chart-container" id="chartContainer">
+                    <canvas id="radarChart"></canvas>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <h3 style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 10px; text-transform:uppercase;">Nombre et catégorie des fautes</h3>
+                    <div id="tagsOutput" class="tags-container"></div>
+                </div>
+            </div>
+
+            <div class="glass-panel">
+                <div class="result-header">
+                    <h2><i class="fas fa-check-double"></i> Correction Finale</h2>
+                    <button class="btn-secondary" onclick="copyCorrection()" style="padding: 5px 10px; font-size: 0.8rem;">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+
+                <div id="loader-correction">
+                    <div class="skeleton sk-text"></div>
+                    <div class="skeleton sk-text"></div>
+                    <div class="skeleton sk-text short"></div>
+                </div>
+
+                <div class="correction-content" id="correctionOutput"></div>
+
+                <div class="advice-box">
+                    <h3 style="font-size: 1rem; margin-bottom: 10px; color: var(--text-main);">
+                        <i class="fas fa-graduation-cap"></i> Le conseil du Professeur
+                    </h3>
+                    
+                    <div id="loader-advice">
+                        <div class="skeleton sk-text"></div>
+                        <div class="skeleton sk-text short"></div>
+                    </div>
+
+                    <div class="advice-content" id="adviceOutput"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://91.169.47.129:32768/api";
+
+        // --- AUTO UPLOAD & ANALYZE ---
+        document.getElementById('fileInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                // Change UI to loading state immediately implies responsiveness
+                document.getElementById('inputText').setAttribute('placeholder', 'Chargement du fichier...');
+                
+                const res = await fetch(`${API_URL}/upload`, { method: 'POST', body: formData });
+                const data = await res.json();
+                
+                // Set text and TRIGGER analysis immediately
+                document.getElementById('inputText').value = data.text;
+                launchAnalysis(); 
+
+            } catch (err) { alert("Erreur lors du chargement du fichier."); }
+        });
+
+        // --- MAIN LOGIC ---
+        async function launchAnalysis() {
+            const text = document.getElementById('inputText').value;
+            if (!text.trim()) return;
+
+            // 1. Prepare UI
+            document.getElementById('resultsGrid').classList.add('visible');
+            
+            toggleLoader('chart', true);
+            toggleLoader('correction', true);
+            toggleLoader('advice', true);
+
+            document.getElementById('tagsOutput').innerHTML = '';
+            
+            // 2. Parallel Fetches (Lazy Loading)
+            const payload = { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({text}) };
+
+            // A. Analysis (Fastest)
+            fetch(`${API_URL}/analyze`, payload)
+                .then(r => r.json())
+                .then(data => {
+                    toggleLoader('chart', false);
+                    renderChart(data.scores);
+                    renderTags(data.raw_counts);
+                });
+
+            // B. Correction (Medium)
+            fetch(`${API_URL}/correct`, payload)
+                .then(r => r.json())
+                .then(data => {
+                    toggleLoader('correction', false);
+                    typeWriter('correctionOutput', data.correction);
+                });
+
+            // C. Advice (Slowest)
+            fetch(`${API_URL}/advise`, payload)
+                .then(r => r.json())
+                .then(data => {
+                    toggleLoader('advice', false);
+                    document.getElementById('adviceOutput').style.display = 'block';
+                    document.getElementById('adviceOutput').innerText = data.advice;
+                });
+        }
+
+        // --- HELPERS ---
+        function toggleLoader(id, show) {
+            const loader = document.getElementById(`loader-${id}`);
+            const content = document.getElementById(id === 'chart' ? 'chartContainer' : id + 'Output');
+            
+            if (show) {
+                loader.style.display = 'block';
+                content.style.display = 'none';
+            } else {
+                loader.style.display = 'none';
+                content.style.display = 'block';
+            }
+        }
+
+        function renderTags(counts) {
+            const container = document.getElementById('tagsOutput');
+            let hasError = false;
+            const map = { 'FORME': 'tag-forme', 'ORTHOGRAPHE': 'tag-ortho', 'GRAMMAIRE': 'tag-gram', 'SYNTAXE': 'tag-ortho' };
+            
+            for (const [cat, count] of Object.entries(counts)) {
+                if (count > 0) {
+                    hasError = true;
+                    container.innerHTML += `<span class="tag ${map[cat] || ''}">${cat}: ${count}</span>`;
+                }
+            }
+            if(!hasError) container.innerHTML = '<span style="color:var(--success)">Aucune erreur détectée.</span>';
+        }
+
+        let myChart = null;
+        function renderChart(scores) {
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            
+            const gradient = ctx.createRadialGradient(150, 150, 0, 150, 150, 150);
+            gradient.addColorStop(0, 'rgba(108, 92, 231, 0.4)');
+            gradient.addColorStop(1, 'rgba(108, 92, 231, 0.1)');
+
+            if (myChart) myChart.destroy();
+
+            myChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: Object.keys(scores),
+                    datasets: [{
+                        label: 'Niveau',
+                        data: Object.values(scores),
+                        backgroundColor: gradient,
+                        borderColor: '#6c5ce7',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#6c5ce7'
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(255,255,255,0.1)' },
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            pointLabels: { color: '#a0a0b0', font: { size: 11 } },
+                            ticks: { display: false, max: 10, min: 0 }
+                        }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function typeWriter(id, text) {
+            const el = document.getElementById(id);
+            el.innerHTML = text; 
+            el.style.opacity = 0;
+            setTimeout(() => { el.style.transition = "opacity 0.5s"; el.style.opacity = 1; }, 50);
+        }
+
+        function copyCorrection() {
+            const text = document.getElementById('correctionOutput').innerText;
+            navigator.clipboard.writeText(text);
+        }
+    </script>
+</body>
+</html>

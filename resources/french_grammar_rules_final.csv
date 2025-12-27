@@ -1,0 +1,79 @@
+rule
+FORME FMAJ: Titres avec article indéfini - Si le titre commence par un article indéfini (un, une, des), seul l'article prend une majuscule. Tout titre d'œuvre doit être mis en italique. Exemples: Un heureux événement (Éliette Abécassis), Des hommes et des dieux (Xavier Beauvois). Exception: Si Dieu est unique: Des hommes et Dieu (avec majuscule à Dieu).
+FORME FMAJ: Titres avec article défini - Si le titre commence par l'article défini (le, la, l', les), il est d'usage de mettre une majuscule au mot suivant. Exemples: La Joconde, Le Déserteur, Le Livre de la jungle. Exception: Pour les titres longs faisant office de phrase, cette règle n'est pas toujours respectée: L'insoutenable légèreté de l'être.
+FORME FMAJ: Titres sans article - Quand le titre ne commence pas par un article, seul le premier mot prend la majuscule, sauf pour les noms propres. Exemples: Tout sur ma mère, Minuit à Paris, Voyage au centre de la Terre. Note: Les noms propres gardent leur majuscule (Paris, Terre pour la planète).
+FORME FMAJ: Titres avec noms coordonnés - Quand le titre est composé de noms coordonnés, seul le premier prend une majuscule. Si les noms sont essentiels ou symétriques, ils prennent tous une majuscule. Exemples: Amour, gloire et beauté (coordination simple), Guerre et Paix, Le Rouge et le Noir, Le Corbeau et le Renard (coordination symétrique).
+FORME FMAJ: Patronymes à particule - Pour les titres comprenant un patronyme à particule ou pour les auteurs à particule, la préposition 'de' ne prend pas de majuscule. Exemples: Jean de Florette (Marcel Pagnol), C'était de Gaulle (Alain Peyrefitte), Gatsby le Magnifique.
+FORME FAGL: Lendemain sans apostrophe - Le mot lendemain s'écrit en un seul mot, sans apostrophe. Exemple: lendemain (et non l'en demain).
+FORME FDIA: Accent aigu - première lettre - On utilise un accent aigu lorsque la voyelle e est la première lettre du mot. Exemples: étable, élection, étendre. Exceptions: Les mots en -ère et -ès prennent un accent grave: une ère, un ers.
+FORME FDIA: Accent aigu - dernière lettre - On utilise un accent aigu lorsque la voyelle e est la dernière lettre du mot, y compris pour les pluriels en -s ou les mots avec e muet final. Exemples: un canapé, des canapés, un abonné, une abonnée.
+FORME FDIA: Accent aigu - entre deux consonnes - On met un accent aigu lorsque la voyelle e est placée entre deux consonnes. Exemples: mélangé, préféré.
+FORME FDIA: Accent aigu - exceptions sans accent - Certains mots ne prennent pas d'accent aigu malgré la prononciation. Exemples: pedigree, repartie (réplique), revolver, besicles ou bésicles.
+FORME FDIA: Accent aigu - syllabe suivante - On met un accent aigu sur un e précédant une syllabe sans e muet. Exemples: immédiat, compléter, génération, généralement.
+FORME FDIA: Accent aigu - participes passés - On met un accent aigu sur la dernière lettre des participes passés des verbes du 1er groupe (-er) et sur le participe passé du verbe être. Exemples: mangé, travaillé, été.
+FORME FDIA: Pas d'accent aigu avant d/f/r/z - On ne met pas d'accent aigu lorsque la voyelle e est suivie de d, f, r ou si z est la dernière lettre. Exemples: une nef, une clef, pied, nez.
+FORME FDIA: Pas d'accent aigu avant x - On ne met jamais d'accent aigu sur les voyelles e précédant un x. Exemples: accent circonflexe, sexe.
+FORME FDIA: Pas d'accent aigu avant consonnes doubles - On ne met jamais d'accent aigu sur les voyelles e précédant des consonnes doubles. Exemples: trompette, étiquette.
+FORME FDIA: Accent grave - mots en -s - On met un accent grave pour les mots se finissant par un s lorsque celui-ci n'est pas la marque du pluriel. Exemples: après, congrès, décès, près, progrès.
+FORME FDIA: Accent grave - avant e muet - On met un accent grave pour les e précédant une syllabe contenant un e muet. Exemples: collège, avènement, fièrement.
+FORME FDIA: Accent grave - avant l ou r - On met un accent grave sur un e lorsque la deuxième lettre qui le suit est soit un l ou un r. Exemples: lièvre, fièvre, nèfle, trèfle.
+FORME FDIA: Pas d'accent grave avant x - On ne met jamais d'accent grave sur les voyelles e précédant un x. Exemples: accent circonflexe, sexe.
+FORME FDIA: Distinction a/à et la/là - On différencie a (verbe avoir) et à (préposition), ainsi que la (pronom ou article) et là (adverbe de lieu). Exemples: Il a bien écouté (=avait), Je vais à Paris, Je vais là-bas (lieu), La personne est loin.
+FORME FDIA: Distinction ça/çà - L'adverbe çà (expression çà et là) prend un accent grave, contrairement à ça qui désigne quelque chose. Exemple: Ça va pas mal, mais il faut chercher çà et là pour améliorer.
+FORME FDIA: Accent grave obligatoire - On met toujours un accent grave pour delà, deçà, déjà, voilà mais jamais pour le pronom cela. Exemple: S'il réussit au-delà de nos espoirs, il pourra s'occuper de cela.
+FORME FDIA: Accent grave sur ù - Le ù avec accent grave n'est utilisé que dans le cas de où qui désigne un lieu. Exemple: Il va où? Sûrement à Marseille ou à Paris.
+FORME FDIA: Accent circonflexe - possessifs - On utilise un accent circonflexe sur les o des mots possessifs. Exemples: le nôtre, le vôtre, les nôtres, les vôtres.
+FORME FDIA: Accent circonflexe - adjectifs et noms - On retrouve un accent circonflexe sur certains adjectifs et noms. Exemples d'adjectifs: mûr, mûre, sûr, sûre. Exemples de noms: jeûne, aumône, boîte, chaîne, château, croûte, grâce, icône, traîner, traître, trêve, voûte.
+FORME FDIA: Accent circonflexe - lettres disparues - On utilise un accent circonflexe pour les mots ayant perdu une lettre avec le temps, généralement un s. Exemples: âne (asne), château (chasteau), fenêtre (fenestre), gîte (giste), hôpital (hospital), goût (goust), tête (test).
+FORME FDIA: Accent circonflexe - conjugaison - Dans la conjugaison, on met toujours un accent circonflexe aux deux premières personnes du pluriel du passé simple et à la 3e personne du singulier de l'imparfait du subjonctif. Exemples: nous fûmes, nous chantâmes, vous fîtes, qu'il fût, qu'il chantât, qu'il vît.
+FORME FDIA: Accent circonflexe - mots en -ître - On met un accent circonflexe sur le i de 3 mots en -ître. Exemples: bélître (mendiant), épître, huître.
+FORME FDIA: Accent circonflexe - verbes -aître/-oître - On met un accent circonflexe sur le i des verbes en -aître et -oître ainsi que le verbe plaire lorsque cet i est suivi d'un t. Exemples: il connaît, il paraîtra, il croît.
+FORME FDIA: Accent circonflexe - suffixe -âtre - On utilise l'accent circonflexe sur le a de -âtre marquant une dépréciation. Exemples: bellâtre, douceâtre, grisâtre.
+FORME FDIA: Rectifications orthographiques 1990 - Les rectifications de l'orthographe de 1990 préconisent la suppression de l'accent circonflexe sur le u et le i. Exemples: la chaine, la voute, paraitre, il parait.
+FORME FDIA: Usage de la cédille - La cédille ne s'emploie qu'avec la lettre c, devant les voyelles a, o et u. Elle indique que le c se prononce [s] et non [k]. Exemples: ça, leçon, reçu.
+ORTHOGRAPHE OORD: Ordre orthographique - Règles concernant l'ordre et la séquence correcte des lettres dans les mots.
+ORTHOGRAPHE OMIS: Lettres manquantes - Règles concernant les lettres manquantes ou omises dans l'orthographe.
+ORTHOGRAPHE OINS: Insertion de lettres - Règles concernant l'insertion de lettres supplémentaires ou indues.
+ORTHOGRAPHE OSUB: Substitution de lettres - Règles concernant la substitution incorrecte d'une lettre par une autre.
+GRAMMAIRE GEUF: Définition lettre euphonique - On insère parfois la lettre s ou t (dite euphonique) entre deux voyelles. Elle n'a aucune fonction grammaticale et facilite seulement la prononciation.
+GRAMMAIRE GEUF: S euphonique à l'impératif - Les verbes du 1er groupe (-er), certains du 2e groupe (-ir) et avoir ne prennent pas de s à la 2e personne du singulier de l'impératif. On ajoute un s euphonique pour faciliter la liaison avec en et y compléments du verbe. Exemples: Parles-en à tes collègues, Distribues-en la moitié, Aies-en un pour tous, Profites-en bien, Retournes-y, Vas-y sans tarder, Cueilles-y les pivoines.
+GRAMMAIRE GEUF: Pas de s euphonique avant infinitif - Quand les pronoms en et y sont suivis d'un infinitif, on n'ajoute pas de s euphonique et on ne met pas de trait d'union. Exemples: Retourne y chercher, Va en distribuer, Ose en parler, Va y mettre.
+GRAMMAIRE GEUF: En préposition - Quand en est une préposition introduisant un complément, on ne met pas de s euphonique ni de trait d'union. Exemples: Va en bateau, Habite en ville.
+GRAMMAIRE GEUF: Pronoms personnels élidés - Les expressions comme donne-moi-z'en sont à éviter à l'écrit. Les lettres m et t sont des pronoms personnels élidés (me, moi, te, toi), suivis de l'apostrophe et non du trait d'union. Exemples: va-t'en, viens-t'en, retourne-t'en, donne-m'en, allons-nous-en, allez-vous-en, donnez-nous-en, prenez-vous-en.
+GRAMMAIRE GEUF: T euphonique - définition - On insère la lettre t, encadrée de traits d'union, entre deux voyelles pour faciliter la prononciation.
+GRAMMAIRE GEUF: T euphonique - usage - On insère le t euphonique entre un verbe conjugué à la 3e personne du singulier se terminant par a, c ou e et le sujet il, elle ou on placé après le verbe. Exemples: Pourra-t-on le joindre?, Comment vainc-t-on ce parasite?, Je suis ravie, a-t-elle répondu, Ainsi demeura-t-elle.
+GRAMMAIRE GEUF: T euphonique dans expressions - Certains noms et expressions comprennent un t euphonique. Exemples: les qu'en-dira-t-on, Ce va-t-en-guerre, ne voilà-t-il pas.
+GRAMMAIRE GEUF: Pas de t après d - On ne met pas de t euphonique après un verbe se terminant par d, car le d se prononce comme un t lors de la liaison. Exemples: Prend-elle?, Répond-il?
+GRAMMAIRE GEUF: T euphonique vs élision - Ne pas confondre le t euphonique avec le t de l'élision des pronoms te et toi. L'élision utilise l'apostrophe, pas le trait d'union. Exemples: Va-t'en (te), Ouvre-t'en (toi), Retourne-t'en (toi). À ne pas écrire: va-t-en.
+GRAMMAIRE GEUF: Coupure avec t euphonique - Lorsqu'on doit couper un verbe contenant un t euphonique, on coupe autant que possible avant le t. Exemple: travaillera-t-il demain?
+GRAMMAIRE GACC: Noms féminins en -ée - Quand un nom se termine par -ée, il est généralement féminin. Exemples: la vallée, la fée, l'allée. Exceptions: l'acné, la clé, la psyché.
+GRAMMAIRE GACC: Noms masculins en -ée - Certains noms masculins se terminant par le son é s'écrivent -ée. Exemples: l'apogée, le lycée, le pygmée, le scarabée.
+GRAMMAIRE GACC: Noms féminins en -té/-tié - La plupart des noms féminins se terminant par -té ou -tié s'écrivent sans e. Exemples: l'amitié, la liberté, la beauté, la volonté. Exceptions: la dictée, la jetée, la montée, la pâtée, la portée, et les noms indiquant une quantité: une cuillerée, une brouettée, une charretée.
+GRAMMAIRE GACC: Noms en -ail/-aille - Les noms en -ail sont masculins, leurs équivalents féminins se terminent par -aille. Exemples masculins: le travail, le gouvernail, le chandail, un éventail. Exemples féminins: la médaille, la taille, la ferraille, la maille, la volaille. Exceptions masculines: braille (nom propre), carton-paille, hache-paille.
+GRAMMAIRE GACC: Noms en -eil/-eille - Les noms en -eil sont masculins, ceux en -eille sont féminins. Exemples masculins: un orteil, le soleil, un appareil, un conseil, le sommeil, le vermeil. Exemples féminins: la corbeille, une abeille, la bouteille, une oreille. Exceptions masculines: ouvre-bouteille, pince-oreille.
+GRAMMAIRE GACC: Noms en -euil/-euille - Les noms en -euil sont masculins, le nom en -euille est féminin. Exemples masculins: le fauteuil, un écureuil, le seuil, le bouvreuil, le chevreuil, le chèvrefeuille, le millefeuille, le portefeuille. Exemple féminin: feuille.
+GRAMMAIRE GACC: Noms en -ueil - Les noms se terminant par -ueil sont masculins. Exemples: un accueil, un cercueil, un écueil, un orgueil, le recueil.
+GRAMMAIRE GACC: Genre selon terminaison déterminant - Le déterminant est masculin quand le nom suivant termine par -l, -eur, -t, -on, -e. Il est féminin quand le nom termine par -ll, -a, -tte.
+GRAMMAIRE GACC: Adjectif féminin selon terminaison - L'adjectif est féminin quand le nom accompagné se termine par -e, -se, -ve, -trice, -euse. Pour former le féminin, on ajoute un -e aux adjectifs finissant par -gu, -ul, -el, -eil, -iel, -ien, -en, -on, -teur, -eur, -ou, -eau, -ier, -iet.
+GRAMMAIRE GACC: Adjectif masculin selon terminaison - L'adjectif est masculin quand le nom accompagné se termine par une consonne, une voyelle autre que e, ou -x, -eur.
+GRAMMAIRE GACC: Nombre singulier - Si l'on parle d'un seul objet, animal ou personne, le nombre est singulier. Déterminants: le, la, un, une, ce, cette, cet, ma, mon.
+GRAMMAIRE GACC: Singulier collectif - Parfois, le singulier peut désigner un groupe d'individus, d'objets ou d'animaux. Exemples: une association, un collectif, un amas, une collection, une colonie, un troupeau.
+GRAMMAIRE GACC: Nombre pluriel - Si l'on parle de plusieurs animaux, objets ou personnes, le nombre est pluriel. Déterminants: les, ces, des, mes.
+GRAMMAIRE GACC: Pluriel des noms - règle générale - Pour former le pluriel, on ajoute généralement un -s à la fin du nom.
+GRAMMAIRE GACC: Noms invariables au pluriel - Les noms se terminant par -x, -s, -z ne changent pas de forme au pluriel.
+GRAMMAIRE GACC: Pluriel en -x - Les noms terminant par -au, -eau, -eu prennent un -x au pluriel. Exceptions pour -ail: des baux, des coraux, des émaux, des soupiraux, des travaux, des vitraux (-ail → -aux).
+GRAMMAIRE GACC: Pluriel des noms en -al - Pour les noms terminant par -al, le pluriel se forme en remplaçant le -l par -ux.
+GRAMMAIRE GACC: Pluriel des noms en -ail - Les noms terminant par -ail prennent un -s au pluriel. Exceptions: des baux, des coraux, des émaux, des soupiraux, des travaux, des vitraux.
+GRAMMAIRE GACC: Pluriel des noms en -ou - Pour les noms terminant par -ou, on ajoute un -s au pluriel. Exceptions: bijoux, cailloux, hiboux, genoux, joujoux, choux, poux.
+GRAMMAIRE GACC: Noms propres invariables - Les noms propres (prénoms, noms de famille, villes, pays, fleuves, régions, marques) sont invariables. Exemples: Jacques Brel, le Japon, la Seine, Bordeaux, la Renaissance.
+GRAMMAIRE GACC: Noms communs variables - Les noms communs désignent des objets, animaux, matières, ingrédients, aliments. Ils s'accordent en nombre. Exemples: une infirmière, les éléphants, un ordinateur, des hésitations.
+GRAMMAIRE GACC: Pluriel des adjectifs - règle générale - On ajoute un -s à la fin de l'adjectif pour obtenir la forme plurielle. Exemples: un fruit sucré → des fruits sucrés, une pomme sucrée → des pommes sucrées.
+GRAMMAIRE GACC: Adjectifs invariables au pluriel - Les adjectifs terminant par -s ou -x ne changent pas de forme au pluriel.
+GRAMMAIRE GACC: Pluriel des adjectifs en -au - Les adjectifs terminant par -au prennent un -x au pluriel.
+GRAMMAIRE GACC: Pluriel des adjectifs en -al - Pour former le pluriel des adjectifs terminant par -al, on remplace le -l par -ux.
+GRAMMAIRE GCON: Concordance grammaticale - Règles concernant la concordance des temps et des modes dans les phrases.
+SYNTAXE SORD: Ordre syntaxique - Règles concernant l'ordre correct des mots et des groupes de mots dans une phrase.
+SYNTAXE SINS: Insertion syntaxique - Règles concernant l'insertion inappropriée de mots ou de groupes de mots dans une phrase.
+SYNTAXE SRED: Redondance syntaxique - Règles concernant la répétition inutile d'éléments syntaxiques.
+SYNTAXE SMIS: Mots manquants - Règles concernant l'omission de mots nécessaires dans une phrase.
+PONCTUATION PONC: Règles de ponctuation - Règles générales concernant l'usage correct de la ponctuation en français.
