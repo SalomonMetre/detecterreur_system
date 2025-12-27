@@ -294,7 +294,7 @@
             } catch (err) { alert("Erreur lors du chargement du fichier."); }
         });
 
-        // --- MAIN LOGIC ---
+ // --- MAIN LOGIC ---
         async function launchAnalysis() {
             const text = document.getElementById('inputText').value;
             if (!text.trim()) return;
@@ -308,34 +308,62 @@
 
             document.getElementById('tagsOutput').innerHTML = '';
             
-            // 2. Parallel Fetches (Lazy Loading)
-            const payload = { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({text}) };
+            // 2. Payloads & Config
+            const payload = { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({text}) 
+            };
 
-            // A. Analysis (Fastest)
+            // A. Analysis (Fastest - Statique)
             fetch(`${API_URL}/analyze`, payload)
                 .then(r => r.json())
                 .then(data => {
                     toggleLoader('chart', false);
                     renderChart(data.scores);
                     renderTags(data.raw_counts);
-                });
+                })
+                .catch(err => console.error("Erreur Analyse:", err));
 
-            // B. Correction (Medium)
+            // B. Correction (Medium - Statique)
             fetch(`${API_URL}/correct`, payload)
                 .then(r => r.json())
                 .then(data => {
                     toggleLoader('correction', false);
                     typeWriter('correctionOutput', data.correction);
-                });
+                })
+                .catch(err => console.error("Erreur Correction:", err));
 
-            // C. Advice (Slowest)
-            fetch(`${API_URL}/advise`, payload)
-                .then(r => r.json())
-                .then(data => {
-                    toggleLoader('advice', false);
-                    document.getElementById('adviceOutput').style.display = 'block';
-                    document.getElementById('adviceOutput').innerText = data.advice;
-                });
+            // C. Advice (Streaming Mode - Fastest Perception)
+            try {
+                const response = await fetch(`${API_URL}/advise`, payload);
+                
+                // On cache le loader et on prépare le conteneur
+                toggleLoader('advice', false);
+                const adviceOutput = document.getElementById('adviceOutput');
+                adviceOutput.innerText = ""; // On vide le contenu précédent
+                adviceOutput.style.display = 'block';
+
+                // Initialisation du Stream
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    // Décodage du chunk et ajout immédiat au texte
+                    const chunk = decoder.decode(value, { stream: true });
+                    adviceOutput.innerText += chunk;
+                    
+                    // Auto-scroll optionnel si le texte devient long
+                    // adviceOutput.scrollTop = adviceOutput.scrollHeight;
+                }
+            } catch (err) {
+                console.error("Erreur Advice Stream:", err);
+                toggleLoader('advice', false);
+                document.getElementById('adviceOutput').innerText = "Erreur lors de la génération du conseil.";
+            }
         }
 
         // --- HELPERS ---
