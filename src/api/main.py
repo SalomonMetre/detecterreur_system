@@ -7,12 +7,14 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import AsyncGenerator
 
 # Import de votre librairie
 from detecterreur.orchestrator import Orchestrator
 
-app = FastAPI(title="DetectErreur API - Professeur Bienveillant")
+app = FastAPI(title="DetectErreur API - Précision Pédagogique")
 
+# Configuration CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -39,14 +41,15 @@ class TextRequest(BaseModel):
 # --- HELPERS ---
 
 async def call_llm(prompt: str, temperature: float = 0.1) -> str:
+    """Appel atomique pour la correction textuelle"""
     async with aiohttp.ClientSession() as session:
         payload = {
-            "model": MODEL_NAME,
-            "prompt": prompt,
+            "model": MODEL_NAME, 
+            "prompt": prompt, 
             "stream": False,
             "options": {
-                "temperature": temperature,
-                "num_ctx": 8192,
+                "temperature": temperature, 
+                "num_ctx": 8192, 
                 "num_predict": 256
             }
         }
@@ -57,85 +60,114 @@ async def call_llm(prompt: str, temperature: float = 0.1) -> str:
                 return result.get("response", "").strip()
         except Exception: return ""
 
-async def stream_ollama(prompt: str):
+async def stream_ollama(prompt: str) -> AsyncGenerator[str, None]:
+    """Générateur robuste pour le streaming JSON d'Ollama"""
     payload = {
-        "model": MODEL_NAME,
-        "prompt": prompt,
+        "model": MODEL_NAME, 
+        "prompt": prompt, 
         "stream": True,
         "options": {
-            "temperature": 0.2,
-            "num_ctx": 8192,
+            "temperature": 0.2, 
+            "num_ctx": 8192, 
             "num_predict": 256
         }
     }
     async with aiohttp.ClientSession() as session:
         async with session.post(LLM_URL, json=payload) as resp:
+            # On itère sur les lignes pour éviter de briser les objets JSON
             async for line in resp.content:
                 if line:
-                    data = json.loads(line.decode("utf-8"))
-                    yield data.get("response", "")
-                    if data.get("done"): break
+                    try:
+                        data = json.loads(line.decode("utf-8"))
+                        token = data.get("response", "")
+                        yield token
+                        if data.get("done"): break
+                    except json.JSONDecodeError:
+                        continue
 
 # --- ENDPOINTS ---
 
 @app.post("/analyze")
 async def analyze_text(request: TextRequest):
+    """Analyse radar basée sur Spacy et l'Orchestrateur"""
     doc = nlp(request.text)
-    sentences = [sent.text.strip() for sent in doc.sents if sent.text.strip()]
     stats = {"FORME": 0, "ORTHOGRAPHE": 0, "GRAMMAIRE": 0, "SYNTAXE": 0, "PONCTUATION": 0}
-    for sent in sentences:
-        for cat, _, has_err in orchestrator.get_error(sent):
-            if has_err and cat in stats: stats[cat] += 1
-    total = max(1, len(sentences))
-    scores = {k: round(max(0, 10-(v/total*3)), 1) for k, v in stats.items()}
+    
+    sentence_count = 0
+    for sent in doc.sents:
+        sentence_count += 1
+        # On délègue la détection brute à l'orchestrateur
+        for cat, _, has_err in orchestrator.get_error(sent.text):
+            if has_err and cat in stats:
+                stats[cat] += 1
+                
+    total = max(1, sentence_count)
+    # Calcul de la "santé" du texte (Base 10)
+    scores = {k: round(max(0, 10 - (v / total * 3)), 1) for k, v in stats.items()}
     return {"scores": scores, "raw_counts": stats}
 
 @app.post("/correct")
 async def correct_text(request: TextRequest):
-    base_correction = orchestrator.correct(request.text)
-    prompt = f"""[Instruction]: Agis comme un correcteur professionnel. 
-    Améliore la fluidité de cette phrase tout en conservant les corrections apportées.
-    - Phrase originale : "{request.text}"
-    - Base corrigée : "{base_correction}"
-    Renvoie UNIQUEMENT la phrase corrigée finale, sans guillemets ni explications."""
+    """Correction recyclée : Orchestrateur (Règles) + LLM (Fluidité)"""
+    report = orchestrator.get_detailed_report(request.text)
+    suggestions = report.get("suggestions", [])
+    
+    # Extraction des modifications indépendantes pour le contexte LLM
+    diff_context = "\n".join([f"- Modification : '{request.text}' -> '{sug[3]}'" 
+                             for sug in suggestions if sug[2]])
+    
+    final_cascade = report.get("corrected")
+
+    prompt = f"""[Instruction]: Tu es un correcteur expert en langue française.
+    L'analyse locale a suggéré ces modifications atomiques :
+    {diff_context}
+
+    [Base de correction]: "{final_cascade}"
+    [Texte original]: "{request.text}"
+
+    TÂCHE: Produis une version finale fluide et correcte. 
+    Respecte strictement les règles de grammaire française.
+    Renvoie UNIQUEMENT le texte final, sans commentaires ni guillemets."""
+    
     final_correction = await call_llm(prompt, temperature=0.1)
-    if not final_correction or len(final_correction.strip()) < 2:
-        final_correction = base_correction
-    return {"correction": final_correction.replace('"', '').strip()}
+    return {"correction": final_correction if final_correction else final_cascade}
 
 @app.post("/advise")
 async def advise_text(request: TextRequest):
-    """Conseil pédagogique sans codes techniques"""
+    """Conseil pédagogique en streaming (Masquage des codes techniques)"""
     report = orchestrator.get_detailed_report(request.text)
-    errors_set = {name for _, name, is_err in report["errors"] if is_err}
+    categories_set = {cat for cat, _, is_err in report["errors"] if is_err}
     
-    if not errors_set:
-        async def success_gen(): yield "Excellent travail ! Votre texte respecte bien les règles de grammaire."
-        return StreamingResponse(success_gen(), media_type="text/plain")
+    if not categories_set:
+        async def success(): yield "Excellent travail ! Aucune erreur détectée."
+        return StreamingResponse(success(), media_type="text/plain")
 
-    # On passe les codes au LLM pour qu'il comprenne la faute, 
-    # mais on lui interdit de les écrire.
     prompt = f"""
-    ### DOCUMENT DE RÉFÉRENCE ###
+    ### RÈGLES DE RÉFÉRENCE ###
     {GRAMMAR_CONTEXT[:5000]}
-    ##############################
+    ###########################
     [TEXTE ÉTUDIANT]: "{request.text}"
-    [INDICES D'ERREURS]: {", ".join(errors_set)}
+    [DOMAINES D'ERREURS]: {", ".join(categories_set)}
 
-    TÂCHE: Agis en professeur de français. Explique la règle de grammaire de manière simple.
+    TÂCHE: Agis en professeur de français bienveillant. Explique la règle.
     
-    CONTRAINTES STRICTES :
-    1. NE MENTIONNE JAMAIS les codes techniques (ex: GCON, FMAJ, ORTH, etc.). 
-    2. Utilise des termes grammaticaux simples (accord, majuscule, conjugaison).
-    3. Donne obligatoirement UN exemple correct.
+    RÈGLES STRICTES :
+    1. NE MENTIONNE JAMAIS de codes techniques (ex: GCON, FMAJ, ORTH).
+    2. Parle uniquement des concepts : {", ".join(categories_set)}.
+    3. Explique la faute simplement et donne obligatoirement UN exemple correct.
     4. Réponse courte (max 60 mots).
     """
     return StreamingResponse(stream_ollama(prompt), media_type="text/plain")
 
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
-    content = await file.read()
-    return {"text": content.decode("utf-8")}
+    """Gestion de l'import de fichiers texte"""
+    try:
+        content = await file.read()
+        return {"text": content.decode("utf-8")}
+    except Exception:
+        raise HTTPException(status_code=400, detail="Fichier invalide.")
 
 if __name__ == "__main__":
+    # Lancement sur le port configuré pour le tunnel Nginx
     uvicorn.run(app, host="0.0.0.0", port=32768)
