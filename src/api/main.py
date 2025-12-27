@@ -11,7 +11,7 @@ from pydantic import BaseModel
 # Import de votre librairie
 from detecterreur.orchestrator import Orchestrator
 
-app = FastAPI(title="DetectErreur API")
+app = FastAPI(title="DetectErreur API - Streaming Mode")
 
 app.add_middleware(
     CORSMiddleware,
@@ -28,7 +28,7 @@ try:
     with open("resources/french_grammar_rules_final.txt", "r", encoding="utf-8") as f:
         GRAMMAR_CONTEXT = f.read()
 except FileNotFoundError:
-    GRAMMAR_CONTEXT = ""
+    GRAMMAR_CONTEXT = "Aucune règle spécifique disponible."
 
 LLM_URL = "http://localhost:11434/api/generate"
 MODEL_NAME = "mistral-nemo"
@@ -36,66 +36,69 @@ MODEL_NAME = "mistral-nemo"
 class TextRequest(BaseModel):
     text: str
 
-# --- HELPERS ---
-async def call_llm(prompt: str, temperature: float = 0.1) -> str:
-    async with aiohttp.ClientSession() as session:
-        payload = {
-            "model": MODEL_NAME,
-            "prompt": prompt,
-            "stream": False,
-            "options": {"temperature": temperature, "num_ctx": 8192, "num_predict": 200}
-        }
-        try:
-            async with session.post(LLM_URL, json=payload) as resp:
-                if resp.status != 200: return ""
-                result = await resp.json()
-                return result.get("response", "").strip()
-        except: return ""
-
+# --- STREAMING HELPER ---
 async def stream_ollama(prompt: str):
     payload = {
         "model": MODEL_NAME,
         "prompt": prompt,
         "stream": True,
-        "options": {"temperature": 0.2, "num_ctx": 8192, "num_predict": 100}
+        "options": {
+            "temperature": 0.2,
+            "num_ctx": 8192,
+            "num_predict": 100,
+        }
     }
+    
     async with aiohttp.ClientSession() as session:
-        async with session.post(LLM_URL, json=payload) as resp:
-            async for line in resp.content:
-                if line:
-                    data = json.loads(line.decode("utf-8"))
-                    yield data.get("response", "")
-                    if data.get("done"): break
+        try:
+            async with session.post(LLM_URL, json=payload) as resp:
+                async for line in resp.content:
+                    if line:
+                        data = json.loads(line.decode("utf-8"))
+                        yield data.get("response", "")
+                        if data.get("done"): break
+        except Exception as e:
+            yield f" [Erreur: {str(e)}]"
 
-# --- ENDPOINTS (ROUTES CORRIGÉES) ---
+# --- ENDPOINTS ---
 
 @app.post("/analyze")
 async def analyze_text(request: TextRequest):
-    sentences = [sent.text.strip() for sent in nlp(request.text).sents if sent.text.strip()]
+    doc = nlp(request.text)
+    sentences = [sent.text.strip() for sent in doc.sents if sent.text.strip()]
     stats = {"FORME": 0, "ORTHOGRAPHE": 0, "GRAMMAIRE": 0, "SYNTAXE": 0, "PONCTUATION": 0}
     for sent in sentences:
         for cat, _, has_err in orchestrator.get_error(sent):
             if has_err and cat in stats: stats[cat] += 1
     total = max(1, len(sentences))
-    scores = {k: round(max(0, 10-(v/total*3)), 1) for k, v in stats.items()}
-    return {"scores": scores, "raw_counts": stats}
+    return {"scores": {k: round(max(0, 10-(v/total*3)), 1) for k, v in stats.items()}, "raw_counts": stats}
 
 @app.post("/correct")
 async def correct_text(request: TextRequest):
-    base = orchestrator.correct(request.text)
-    prompt = f'Corrige ce texte sans bla-bla, renvoie juste le texte: "{base}"'
-    final = await call_llm(prompt)
-    return {"correction": final if final else base}
+    """Endpoint crucial pour le frontend"""
+    base_correction = orchestrator.correct(request.text)
+    # On renvoie la correction de l'orchestrateur (très rapide)
+    return {"correction": base_correction}
 
 @app.post("/advise")
 async def advise_text(request: TextRequest):
     report = orchestrator.get_detailed_report(request.text)
-    errs = {name for _, name, is_err in report["errors"] if is_err}
-    if not errs:
-        async def ok(): yield "Aucune erreur détectée !"
-        return StreamingResponse(ok(), media_type="text/plain")
+    errors_set = {name for _, name, is_err in report["errors"] if is_err}
     
-    prompt = f"[CONTEXTE]: {GRAMMAR_CONTEXT[:4000]}\n[FAUTE]: {request.text}\nConseil court + exemple (max 50 mots):"
+    if not errors_set:
+        async def success_gen(): yield "Parfait ! Aucune erreur détectée."
+        return StreamingResponse(success_gen(), media_type="text/plain")
+
+    prompt = f"""
+    ### DOCUMENT DE RÉFÉRENCE ###
+    {GRAMMAR_CONTEXT[:5000]}
+    ##############################
+    [INPUT]: "{request.text}"
+    [CODES]: {", ".join(errors_set)}
+
+    TÂCHE: Agis en prof de français. Donne un conseil très court (moins de 50 mots) + UN exemple. 
+    Sois direct. Pas de politesses. Pas de codes techniques.
+    """
     return StreamingResponse(stream_ollama(prompt), media_type="text/plain")
 
 @app.post("/upload")
