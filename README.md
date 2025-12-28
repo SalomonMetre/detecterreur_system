@@ -1,6 +1,6 @@
 # DetectErreur System 🇫🇷
 
-**DetectErreur System** is a full-stack educational web application designed to assist L2 learners of French. It combines **deterministic rule-based algorithms** (via the `detecterreur` library) for precise error detection with **Generative AI** (Mistral-Nemo) for contextual correction and pedagogical advice strictly grounded in grammar rules.
+**DetectErreur System** is an educational web application designed to assist L2 learners of French. It combines **deterministic rule-based algorithms** (via the `detecterreur` library) for precise error detection with **Generative AI** (Mistral-Nemo) for contextual correction and pedagogical advice strictly grounded in grammar rules.
 
 <img src="./images/detecterreur_picture.jpeg" alt="DetectErreur UI Preview" width="100%">
 
