@@ -3,11 +3,15 @@ import asyncio
 import aiohttp
 import spacy
 import uvicorn
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Request, Response
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import AsyncGenerator
+from pathlib import Path
+import sqlite3
+import time
+from codecarbon import EmissionsTracker
 
 # Import de votre librairie
 from detecterreur.orchestrator import Orchestrator
@@ -21,6 +25,60 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# DB CONFIGS
+DB_PATH = Path("carbon_footprint.sqlite")
+
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS api_emissions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            route TEXT,
+            method TEXT,
+            status_code INTEGER,
+            emissions_kg REAL,
+            duration_ms REAL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+init_db()
+
+# MIDDLEWARE
+@app.middleware("http")
+async def carbon_middleware(request: Request, call_next):
+    tracker = EmissionsTracker(save_to_file=False)
+
+    tracker.start()
+    start = time.time()
+
+    response: Response = await call_next(request)
+
+    emissions_kg = tracker.stop()
+    duration_ms = (time.time() - start) * 1000
+
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute(
+        """
+        INSERT INTO api_emissions (route, method, status_code, emissions_kg, duration_ms)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            request.url.path,
+            request.method,
+            response.status_code,
+            float(emissions_kg) if emissions_kg is not None else 0.0,
+            duration_ms
+        )
+    )
+    conn.commit()
+    conn.close()
+
+    return response
+
 
 # --- RESSOURCES GLOBALES ---
 nlp = spacy.load("fr_core_news_sm")

@@ -8,3 +8,7 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Emissions tracking database
+carbon_footprint.sqlite
+*.sqlite
